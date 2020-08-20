@@ -1,29 +1,7 @@
-async function putData(url, data = {}) {
-    // Default options are marked with *
-    const response = await fetch(url, {
-      method: 'PUT', // *GET, POST, PUT, DELETE, etc.
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data) // body data type must match "Content-Type" header
-    });
-    return response.json(); // parses JSON response into native JavaScript objects
-  }
-
-async function postData(url, data = {}) {
+async function fetchData(type, url, data = {}) {
+  // Default options are marked with *
   const response = await fetch(url, {
-    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data) // body data type must match "Content-Type" header
-  });
-  return response.json(); // parses JSON response into native JavaScript objects
-}
-
-async function deleteData(url, data = {}) {
-  const response = await fetch(url, {
-    method: 'DELETE', // *GET, POST, PUT, DELETE, etc.
+    method: type, // *GET, POST, PUT, DELETE, etc.
     headers: {
       'Content-Type': 'application/json'
     },
@@ -35,35 +13,41 @@ async function deleteData(url, data = {}) {
 const submitName = async () => {
     let input = document.getElementById('submitValue');
     let jsonVal = input.value === null ? '' : input.value;
-    await postData('/api/friends', {'newFriend': jsonVal});
+    try {
+      await fetchData('POST','/api/friends', {'newFriend': jsonVal});
+    }
+    catch(err) {
+      console.log('Error -- ' + err);
+      input.placeholder = 'Sorry...'
+    } 
     input.value = null;
     populateDropdown();
 }
 
-const incRating = async (friend) => {
+const plusFriend = async (friend) => {
     let newFriend = {
         'name': friend.name,
         'rating': friend.rating + 1
     }
-    await putData(`/api/friends/${friend.id}`, newFriend);
+    await fetchData('PUT',`/api/friends/${friend.id}`, newFriend);
     populateDropdown();
 }
 
-const decRating = async (friend) => {
+const minusFriend = async (friend) => {
     let newFriend = {
         'name': friend.name,
         'rating': friend.rating - 1
     }
-    await putData(`/api/friends/${friend.id}`, newFriend);
+    await fetchData('PUT',`/api/friends/${friend.id}`, newFriend);
     populateDropdown();
 }
 
 const deleteFriend = async(friend) => {
-  await deleteData(`/api/friends/${friend.id}`, {'id' : friend.id });
+  await fetchData('DELETE', `/api/friends/${friend.id}`, {'id' : friend.id });
   populateDropdown();
 }
 
-const makeFriend = (data) => {
+const renderFriends = (data) => {
 
     const newDiv = `<div>
       ${data.map(friend =>
@@ -80,23 +64,25 @@ const makeFriend = (data) => {
     list.innerHTML = newDiv;
 }
 
+const addButtonListeners = (data,...args) => {
+  [...args].forEach( str => { 
+    const func = eval(`${str}Friend`);
+    [...document.getElementsByClassName(str)].forEach(elem => {
+    elem.addEventListener('click', () => 
+      func(data.find( friend => `${str}${friend.id}` === `${elem.id}`)))})});
+}
+
 const populateDropdown = async() => {
     try {
       const result = await fetch('/api/friends');
       const data = await result.json();
-      makeFriend(data.sort((a,b) => a.id < b.id ? -1 : 1));
+      renderFriends(data.sort((a,b) => a.rating >= b.rating ? -1 : 1));
 
-      [...document.getElementsByClassName('plus')].forEach(plus => {
-        plus.addEventListener('click', () => incRating(data.find( friend => `plus${friend.id}` === `${plus.id}`)))});
-      [...document.getElementsByClassName('minus')].forEach(minus => {
-        minus.addEventListener('click', () => decRating(data.find( friend => `minus${friend.id}` === `${minus.id}`)))});
-      [...document.getElementsByClassName('delete')].forEach(del => {
-        del.addEventListener('click', () => deleteFriend(data.find( friend => `delete${friend.id}` === `${del.id}`)))});
-
+      addButtonListeners(data, 'plus', 'minus', 'delete');
       document.getElementById('submitButton').addEventListener('click', submitName);
     }
     catch(err) {
-        next(err);
+        console.log('Error -- ' + err.message);
     }
 }
 

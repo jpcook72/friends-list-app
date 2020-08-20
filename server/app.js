@@ -10,13 +10,11 @@ app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-
 app.use('/api', APIrouter);
 
 app.use(express.static(path.join(__dirname,'..','public')))
 
 app.use((req,res,next) => {
-  console.log('yup main route')
     var err = new Error('Not a page');
     err.status = 404;
     next(err);
