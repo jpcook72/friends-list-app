@@ -1,0 +1,21 @@
+h4 {
+    margin-bottom: 3px;
+}
+
+h5 {
+    margin-top: 1px;
+    margin-bottom: 1px;
+}
+
+#flexDiv {
+    display: flex;
+    width: 20%;
+    margin-bottom: 20px;
+    height: 20px;
+    justify-content: space-around;
+}
+
+
+body {
+    color: blue;
+}
